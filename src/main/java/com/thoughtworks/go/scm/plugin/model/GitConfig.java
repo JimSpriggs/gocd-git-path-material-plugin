@@ -42,6 +42,10 @@ public class GitConfig {
         return url.startsWith("http://") || url.startsWith("https://");
     }
 
+    public boolean isAssembla() {
+        return url.startsWith("git@git.assembla.com:");
+    }
+
     public boolean hasCredentials() {
         return !StringUtils.isEmpty(url) && !StringUtils.isEmpty(password);
     }

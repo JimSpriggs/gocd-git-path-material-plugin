@@ -1,5 +1,8 @@
 package com.thoughtworks.go.scm.plugin.jgit;
 
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
 import com.thoughtworks.go.scm.plugin.model.GitConfig;
 import com.thoughtworks.go.scm.plugin.model.ModifiedFile;
 import com.thoughtworks.go.scm.plugin.model.Revision;
@@ -16,8 +19,7 @@ import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.submodule.SubmoduleStatus;
 import org.eclipse.jgit.submodule.SubmoduleWalk;
-import org.eclipse.jgit.transport.RefSpec;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
@@ -714,6 +716,21 @@ public class JGitHelper extends GitHelper {
     private void setCredentials(TransportCommand command) {
         if (gitConfig.isRemoteUrl() && gitConfig.hasCredentials()) {
             command.setCredentialsProvider(new UsernamePasswordCredentialsProvider(gitConfig.getUsername(), gitConfig.getPassword()));
+        } else if (gitConfig.isAssembla()){
+            final SshSessionFactory sshSessionFactory = new JschConfigSessionFactory() {
+                @Override
+                protected void configure(OpenSshConfig.Host host, Session session ) {
+                    session.setConfig("StrictHostKeyChecking", "no");
+                }
+            };
+
+            command.setTransportConfigCallback(new TransportConfigCallback() {
+                @Override
+                public void configure(Transport transport) {
+                    SshTransport sshTransport = (SshTransport)transport;
+                    sshTransport.setSshSessionFactory(sshSessionFactory);
+                }
+            });
         }
     }
 }
